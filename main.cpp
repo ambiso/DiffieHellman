@@ -6,15 +6,21 @@
 
 using namespace std;
 
+typedef unordered_set<int64_t> i64uset;
+
 bool isPrime(int64_t x);
-int64_t pow(int64_t b, int64_t e);
+int64_t spow(int64_t b, int64_t e);
+int64_t modpow(int64_t b, int64_t e, int64_t m);
 bool isPrimitiveRoot(int64_t pr, int64_t m);
 int64_t totient(int64_t x);
 int64_t gcd(int64_t a, int64_t b);
+i64uset factorize(int64_t x);
 
 int main()
 {
-    int64_t p, g, a, B;
+    int64_t p = 0, g = 0, a = 0, B = 0, facsize;
+    mt19937 gen;
+    i64uset factors;
     cout << "[M]anual or [A]uto?" << endl;
     char c;
     cin >> c;
@@ -40,21 +46,53 @@ int main()
                 cout << g << " is not a primitive root of " << p << endl;
                 return 1;
             }
-            cout << "Enter secret: \t";
-            cin >> a;
-            cout << "Send Bob: \t" << pow(g, a) % p << endl;
-            cout << "Enter B: \t";
-            cin >> B;
-            cout << "Shared secret: \t" << pow(B,a) % p;
             break;
         case 'a':
         case 'A':
-
+            cout << "Enter random numbers: ";
+            unsigned int seed;
+            cin >> seed;
+            gen.seed(seed);
+            cout << "Generated prime: \t";
+            p = gen()/100000;
+            while(!isPrime(p))
+                p++;
+            cout << p << endl;
+            cout << "Generated base: \t";
+            factors = factorize(p-1);
+            facsize = factors.size();
+            for(int64_t i = 2; i < p; i++)
+            {
+                int64_t j = 0;
+                for(auto it = begin(factors); it != end(factors); it++)
+                {
+                    if(modpow(i, (p-1) / *it, p) == 1)
+                        break;
+                    j++;
+                }
+                if(j == facsize)
+                {
+                    g = i;
+                    break;
+                }
+            }
+            if(g == 0)
+            {
+                cout << "This should never happen. Please report this issue" << endl;
+                return 1;
+            }
+            cout << g << endl;
             break;
         default:
             cout << "Error, wrong input." << endl;
             return 1;
     }
+    cout << "Enter secret: \t";
+    cin >> a;
+    cout << "Send Bob: \t" << modpow(g, a, p) << endl;
+    cout << "Enter B: \t";
+    cin >> B;
+    cout << "Shared secret: \t" << modpow(B, a, p);
     return 0;
 }
 
@@ -68,12 +106,23 @@ bool isPrime(int64_t x)
     return true;
 }
 
-int64_t pow(int64_t b, int64_t e)
+int64_t spow(int64_t b, int64_t e)
 {
     assert(e >= 0);
     int64_t res = 1;
     for(int64_t i = 0; i < e; i++)
         res *= b;
+    return res;
+}
+
+int64_t modpow(int64_t b, int64_t e, int64_t m)
+{
+    assert(e >= 0 && m > 1);
+    int64_t res = 1;
+    for(int64_t i = 0; i < e; i++) {
+        res *= b;
+        res %= m;
+    }
     return res;
 }
 
@@ -101,6 +150,20 @@ int64_t gcd(int64_t a, int64_t b)
     return a;
 }
 
+i64uset factorize(int64_t x)
+{
+    i64uset factors;
+    for(int64_t i = 2; i <= x; i++)
+    {
+        while(x % i == 0)
+        {
+            factors.insert(i);
+            x /= i;
+        }
+    }
+    return factors;
+}
+
 bool isPrimitiveRoot(int64_t a, int64_t p)
 {
     assert(a > 0 && p > 0);
@@ -109,14 +172,17 @@ bool isPrimitiveRoot(int64_t a, int64_t p)
 
     int64_t s = totient(p), x = s;
 
-    for(int64_t i = 2; i <= x; i++)
+    for(int64_t i = 2; i <= x/i; i++)
     {
         while(x % i == 0)
         {
-            if(pow(a, s / i) % p == 1)
+            if(modpow(a, s / i, p) == 1)
                 return false;
             x /= i;
         }
     }
+    if(x > 1)
+        if(modpow(a, s / x, p) == 1)
+            return false;
     return true;
 }
