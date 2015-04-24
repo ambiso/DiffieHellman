@@ -1,7 +1,7 @@
 #include <iostream>
 #include <random>
+#include <gmp.h>
 #include <unordered_set>
-#include <gmpxx.h>
 #include <inttypes.h>
 #include <assert.h>
 
@@ -10,20 +10,18 @@ using namespace std;
 typedef unordered_set<const mpz_t*> mpztuset;
 
 bool isPrime(int64_t x);
-int64_t spow(int64_t b, int64_t e);
-int64_t modpow(int64_t b, int64_t e, int64_t m);
 bool isPrimitiveRoot(const mpz_t a, const mpz_t m);
 void totient(mpz_t rop, const mpz_t x);
-mpztuset factorize(mpz_t x);
+mpztuset factorize(const mpz_t x);
 
 int main(int argc, char **argv)
 {
-    mpz_t p, g, a, B, facsize, sec, i, j;
-    mpz_inits(p, g, a, B, facsize, sec, NULL);
+    mpz_t p, g, a, B, facsize, sec, i, j, tmp, tmp2;
+    mpz_inits(p, g, a, B, facsize, sec, i, j, tmp, tmp2, NULL);
     string buf;
     mt19937 gen;
     mpztuset factors;
-    
+
     if(argc > 1)
     {
     	mpz_set_str(sec, argv[1], 10);
@@ -36,18 +34,13 @@ int main(int argc, char **argv)
         case 'M':
             cout << "Enter prime: \t";
             getline(cin, buf);
-	    mpz_set_str(p, buf.c_str(), 10);
+			mpz_set_str(p, buf.c_str(), 10);
             if(mpz_probab_prime_p(p, 25) != 2)
             {
-                cout << p << " is (probably) not a prime. Continue? y/n" << endl;
-                cin >> c;
-		if(c != 'y' && c != 'Y') 
-		{
-		    return 1;
-		}
+				gmp_printf("%Zd is (probably) not a prime Continue? y/n_\b", p);
             }
             cout << "Enter base: \t";
-            cin >> g;
+            gmp_scanf("%Zd", g);
             if(mpz_cmp_si(g, 1) <= 0) //g <= 1
             {
                 cout << "Base must be higher than 1" << endl;
@@ -55,11 +48,11 @@ int main(int argc, char **argv)
             }
             if(!isPrimitiveRoot(g, p))
             {
-                cout << g << " is not a primitive root of " << p << endl;
+				gmp_printf("%Zd is not a primitive root of %Zd\n", g, p);
                 return 1;
             }
             cout << "Enter secret: \t";
-            cin >> a;
+            gmp_scanf("%Zd", a);
             break;
         case 'a':
         case 'A':
@@ -72,66 +65,81 @@ int main(int argc, char **argv)
             mpz_tdiv_q(p, p, sec);
             mpz_add_ui(p, p, 2);
             mpz_nextprime(p, p);
-            cout << p << endl;
+            gmp_printf("%Zd\n", p);
             cout << "Gen'd base: \t";
-            factors = factorize(p-1);
+            mpz_sub_ui(tmp, p, 1);
+            factors = factorize(tmp);
             mpz_set_ui(facsize, factors.size());
-            
-            for(mpz_set_ui(i, 2); mpz_cmp(i, p) < 0; mpz_add_ui(i, 1))
+
+            for(mpz_set_ui(i, 2); mpz_cmp(i, p) < 0; mpz_add_ui(i, i, 1))
             {
-                int64_t j = 0;
+				mpz_set_ui(j, 0);
                 for(auto it = begin(factors); it != end(factors); it++)
                 {
-                    if(modpow(i, (p-1) / *it, p) == 1)
+					mpz_sub_ui(tmp, p, 1);
+					mpz_tdiv_q(tmp, tmp, *(*it));
+					mpz_powm(tmp, i, tmp, p);
+                    if(mpz_cmp_ui(tmp, 1) == 0) //modpow(i, (p-1) / *it, p) == 1
                         break;
-                    j++;
+                    mpz_add_ui(j, j, 1);
                 }
-                if(j == facsize)
+                if(mpz_cmp(j, facsize) == 0)
                 {
-                    g = i;
+                    mpz_set(g, i);
                     break;
                 }
             }
-            if(g == 0)
+            if(mpz_cmp_ui(g, 0) == 0)
             {
                 cout << "This should never happen. Please report this issue" << endl;
                 return 1;
             }
+<<<<<<< HEAD
             cout << g << endl;
             a = gen() % (p-2) + 2;
             cout << "Gen'd secret: \t" << a << endl;
+=======
+            gmp_printf("%Zd\n", g);
+            mpz_sub_ui(tmp, p, 2); //p-2
+            mpz_set_ui(tmp2, gen()); //gen()
+            mpz_tdiv_r(tmp, tmp2, tmp); //gen() % (p-2)
+            mpz_add_ui(tmp, tmp, 2); // (gen() % (p-2)) + 2
+            mpz_set(a, tmp); // a = (gen() % (p-2)) + 2
+            gmp_printf("Gen'd secret: \t%Zd\n", a);
+>>>>>>> No more compiling errors. (amend: but runtime errors)
             break;
         default:
             cout << "Error, wrong input." << endl;
             return 1;
     }
-    if(a < 2 || a > p-1)
+    mpz_sub_ui(tmp, p, 1);
+    if(mpz_cmp_ui(a, 2) < 0 || mpz_cmp(a, tmp) > 0)
     {
-        cout << "Please choose a secret between 1 and " << p << endl;
+		gmp_printf("Please choose a secret between 1 and %Zd\n", p);
         return 1;
     }
-    cout << "Send Bob: \t" << modpow(g, a, p) << endl;
+    mpz_powm(tmp, g, a, p); //modpow(g, a, p)
+    gmp_printf("Send Bob:\t%Zd\n", tmp);
     cout << "Enter B: \t";
-    cin >> B;
-    cout << "Shared secret: \t" << modpow(B, a, p) << endl;
+    gmp_scanf("%Zd", B);
+    mpz_powm(tmp, B, a, p); //tmp
+    gmp_printf("Shared secret: \t%Zd\n", tmp);
     return 0;
 }
 
-mpz_t totient(mpz_t rop, const mpz_t x)
+void totient(mpz_t rop, const mpz_t x)
 {
     assert(mpz_cmp_si(x, 0) >= 0);
     mpz_t i, tmp;
-    mpz_set_si(rop, rop, 1);
-    mpz_inits(i, tmp, NULL);
-    for(; mpz_cmp(i, x) < 0; mpz_add_ui(i, i, 1))
+    mpz_set_si(rop, 1);
+    for(mpz_inits(i, tmp, NULL); mpz_cmp(i, x) < 0; mpz_add_ui(i, i, 1))
     {
-	mpz_gcd(tmp, x, i);
-        if(mpz_cmp(tmp, 1) == 0) //gcd(x, i) == 1
-            mpz_add_ui(res, res, 1);
+		mpz_gcd(tmp, x, i);
+        if(mpz_cmp_ui(tmp, 1) == 0) //gcd(x, i) == 1
+            mpz_add_ui(rop, rop, 1);
     }
     mpz_clear(i);
     mpz_clear(tmp);
-    return res;
 }
 
 
@@ -154,7 +162,7 @@ mpztuset factorize(const mpz_t x)
 				mpz_set(to_insert, i);
 				factors.insert(&to_insert);
 			}
-			mpz_div_q(x, x, i);
+			mpz_tdiv_q(xs, xs, i);
 			k++;
         }
     }
@@ -163,26 +171,34 @@ mpztuset factorize(const mpz_t x)
 
 bool isPrimitiveRoot(const mpz_t a, const mpz_t p)
 {
-    assert(mpz_cmpsi(a, 0) > 0 && mpz_cmpsi(p, 0)  > 0);
+    assert(mpz_cmp_si(a, 0) > 0 && mpz_cmp_si(p, 0)  > 0);
     if(mpz_cmp(a, p) > 0)
         return false;
 
     mpz_t s, x, i, tmp;
     mpz_inits(s, x, i, tmp, NULL);
-    mpz_set(s, totient(p));
+    totient(s, p);
     mpz_set(x, s);
-    mpz_
-    for(mpz_set_si(i, 2); mpz_cmp(i,  x/i; i++)
+    mpz_tdiv_q(tmp, x, i);
+    for(mpz_set_si(i, 2); mpz_cmp(i,  tmp) <= 0; mpz_add_ui(i, i, 1))
     {
-        while(x % i == 0)
+		mpz_tdiv_r(tmp, x, i);
+        while(mpz_cmp_ui(tmp, 0) == 0)
         {
-            if(modpow(a, s / i, p) == 1)
+			mpz_tdiv_q(tmp, s, i);
+			mpz_powm(tmp, a, tmp, p);
+            if(mpz_cmp_ui(tmp, 1) == 0)
                 return false;
-            x /= i;
+            mpz_tdiv_q(x, x, i);
         }
+		mpz_tdiv_q(tmp, x, i);
     }
-    if(x > 1)
-        if(modpow(a, s / x, p) == 1)
+    if(mpz_cmp_ui(x, 1) > 0)
+    {
+		mpz_tdiv_q(tmp, s, x);
+		mpz_powm(tmp, a, tmp, p);
+        if(mpz_cmp_ui(tmp, 1) == 0) //modpow(a, s / x, p) == 1
             return false;
+    }
     return true;
 }
