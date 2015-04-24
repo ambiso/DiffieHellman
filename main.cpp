@@ -1,7 +1,7 @@
 #include <iostream>
-#include <gmpxx.h>
 #include <random>
 #include <unordered_set>
+#include <gmpxx.h>
 #include <inttypes.h>
 #include <assert.h>
 
@@ -18,7 +18,7 @@ mpztuset factorize(mpz_t x);
 
 int main(int argc, char **argv)
 {
-    mpz_t p, g, a, B, facsize, sec;
+    mpz_t p, g, a, B, facsize, sec, i, j;
     mpz_inits(p, g, a, B, facsize, sec, NULL);
     string buf;
     mt19937 gen;
@@ -75,8 +75,9 @@ int main(int argc, char **argv)
             cout << p << endl;
             cout << "Gen'd base: \t";
             factors = factorize(p-1);
-            facsize = factors.size();
-            for(int64_t i = 2; i < p; i++)
+            mpz_set_ui(facsize, factors.size());
+            
+            for(mpz_set_ui(i, 2); mpz_cmp(i, p) < 0; mpz_add_ui(i, 1))
             {
                 int64_t j = 0;
                 for(auto it = begin(factors); it != end(factors); it++)
@@ -118,7 +119,7 @@ int main(int argc, char **argv)
 
 mpz_t totient(mpz_t rop, const mpz_t x)
 {
-    assert(mpz_cmpsi(x, 0) >= 0);
+    assert(mpz_cmp_si(x, 0) >= 0);
     mpz_t i, tmp;
     mpz_set_si(rop, rop, 1);
     mpz_inits(i, tmp, NULL);
@@ -151,7 +152,7 @@ mpztuset factorize(const mpz_t x)
 				mpz_t to_insert;
 				mpz_init(to_insert);
 				mpz_set(to_insert, i);
-				factors.insert(to_insert);
+				factors.insert(&to_insert);
 			}
 			mpz_div_q(x, x, i);
 			k++;
