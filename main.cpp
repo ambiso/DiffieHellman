@@ -21,7 +21,7 @@ int main(int argc, char **argv)
     string buf;
     mt19937 gen;
     mpztuset factors;
-
+    mpz_set_ui(sec, 100000);
     if(argc > 1)
     {
     	mpz_set_str(sec, argv[1], 10);
@@ -46,11 +46,11 @@ int main(int argc, char **argv)
                 cout << "Base must be higher than 1" << endl;
                 return 1;
             }
-            if(!isPrimitiveRoot(g, p))
+            /*if(!isPrimitiveRoot(g, p))
             {
 				gmp_printf("%Zd is not a primitive root of %Zd\n", g, p);
                 return 1;
-            }
+            }*/
             cout << "Enter secret: \t";
             gmp_scanf("%Zd", a);
             break;
@@ -70,7 +70,6 @@ int main(int argc, char **argv)
             mpz_sub_ui(tmp, p, 1);
             factors = factorize(tmp);
             mpz_set_ui(facsize, factors.size());
-
             for(mpz_set_ui(i, 2); mpz_cmp(i, p) < 0; mpz_add_ui(i, i, 1))
             {
 				mpz_set_ui(j, 0);
@@ -145,25 +144,26 @@ mpztuset factorize(const mpz_t x)
     mpz_set(xs, x);
     for(mpz_set_si(i, 2); mpz_cmp(i, xs) <= 0; mpz_add_ui(i, i, 1))
     {
-		mpz_mod(tmp, xs, i);
+        mpz_mod(tmp, xs, i);
 		int k = 0;
         while(mpz_cmp_ui(tmp, 0) == 0)
         {
 			if(k == 0)
 			{
-				mpz_t to_insert;
-				mpz_init(to_insert);
-				mpz_set(to_insert, i);
-				factors.insert(&to_insert);
+				mpz_t* to_insert = reinterpret_cast<mpz_t*>(malloc(sizeof(mpz_t)));
+				mpz_init(*to_insert);
+				mpz_set(*to_insert, i);
+				factors.insert(to_insert);
 			}
 			mpz_tdiv_q(xs, xs, i);
+			mpz_mod(tmp, xs, i);
 			k++;
         }
     }
     return factors;
 }
 
-bool isPrimitiveRoot(const mpz_t a, const mpz_t p)
+bool isPrimitiveRoot(const mpz_t a, const mpz_t p) //DEPRECATED
 {
     assert(mpz_cmp_si(a, 0) > 0 && mpz_cmp_si(p, 0)  > 0);
     if(mpz_cmp(a, p) > 0)
