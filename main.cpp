@@ -16,11 +16,22 @@ int64_t totient(int64_t x);
 int64_t gcd(int64_t a, int64_t b);
 i64uset factorize(int64_t x);
 
-int main()
+int main(int argc, char **argv)
 {
-    int64_t p = 0, g = 0, a = 0, B = 0, facsize;
+    int64_t p = 0, g = 0, a = 0, B = 0, facsize = 0, sec = 100000;
     mt19937 gen;
     i64uset factors;
+
+    if(argc > 1)
+    {
+	sec = strtoul(argv[1], NULL, 10);
+	if(errno == ERANGE)
+	{
+	    cout << "Invalid argument." << endl;
+	    errno = 0;
+	    return 1;
+	}
+    }
     cout << "[M]anual or [A]uto?" << endl;
     char c;
     cin >> c;
@@ -57,7 +68,7 @@ int main()
             gen.seed(seed);
             cout << "Gen'd prime: \t";
             while(p == 0)
-                p = gen()/100000;
+                p = gen()/sec;
             while(!isPrime(p))
                 p++;
             cout << p << endl;
