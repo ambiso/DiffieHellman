@@ -92,9 +92,9 @@ int main()
             cout << "Error, wrong input." << endl;
             return 1;
     }
-    if(a < 0 || a > p)
+    if(a < 2 || a > p-1)
     {
-        cout << "Please choose a secret between 0 and " << p << endl;
+        cout << "Please choose a secret between 1 and " << p << endl;
         return 1;
     }
     cout << "Send Bob: \t" << modpow(g, a, p) << endl;
