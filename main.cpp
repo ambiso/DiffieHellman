@@ -100,7 +100,7 @@ int main()
     cout << "Send Bob: \t" << modpow(g, a, p) << endl;
     cout << "Enter B: \t";
     cin >> B;
-    cout << "Shared secret: \t" << modpow(B, a, p);
+    cout << "Shared secret: \t" << modpow(B, a, p) << endl;
     return 0;
 }
 
