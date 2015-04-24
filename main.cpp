@@ -46,6 +46,8 @@ int main()
                 cout << g << " is not a primitive root of " << p << endl;
                 return 1;
             }
+            cout << "Enter secret: \t";
+            cin >> a;
             break;
         case 'a':
         case 'A':
@@ -53,12 +55,13 @@ int main()
             unsigned int seed;
             cin >> seed;
             gen.seed(seed);
-            cout << "Generated prime: \t";
-            p = gen()/100000;
+            cout << "Gen'd prime: \t";
+            while(p == 0)
+                p = gen()/100000;
             while(!isPrime(p))
                 p++;
             cout << p << endl;
-            cout << "Generated base: \t";
+            cout << "Gen'd base: \t";
             factors = factorize(p-1);
             facsize = factors.size();
             for(int64_t i = 2; i < p; i++)
@@ -82,13 +85,18 @@ int main()
                 return 1;
             }
             cout << g << endl;
+            a = gen() % p;
+            cout << "Gen'd secret: \t" << a << endl;
             break;
         default:
             cout << "Error, wrong input." << endl;
             return 1;
     }
-    cout << "Enter secret: \t";
-    cin >> a;
+    if(a < 0 || a > p)
+    {
+        cout << "Please choose a secret between 0 and " << p << endl;
+        return 1;
+    }
     cout << "Send Bob: \t" << modpow(g, a, p) << endl;
     cout << "Enter B: \t";
     cin >> B;
