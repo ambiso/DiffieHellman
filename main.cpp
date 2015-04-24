@@ -1,4 +1,5 @@
 #include <iostream>
+#include <gmpxx.h>
 #include <random>
 #include <unordered_set>
 #include <inttypes.h>
@@ -6,31 +7,26 @@
 
 using namespace std;
 
-typedef unordered_set<int64_t> i64uset;
+typedef unordered_set<const mpz_t*> mpztuset;
 
 bool isPrime(int64_t x);
 int64_t spow(int64_t b, int64_t e);
 int64_t modpow(int64_t b, int64_t e, int64_t m);
-bool isPrimitiveRoot(int64_t pr, int64_t m);
-int64_t totient(int64_t x);
-int64_t gcd(int64_t a, int64_t b);
-i64uset factorize(int64_t x);
+bool isPrimitiveRoot(const mpz_t a, const mpz_t m);
+void totient(mpz_t rop, const mpz_t x);
+mpztuset factorize(mpz_t x);
 
 int main(int argc, char **argv)
 {
-    int64_t p = 0, g = 0, a = 0, B = 0, facsize = 0, sec = 100000;
+    mpz_t p, g, a, B, facsize, sec;
+    mpz_inits(p, g, a, B, facsize, sec, NULL);
+    string buf;
     mt19937 gen;
-    i64uset factors;
-
+    mpztuset factors;
+    
     if(argc > 1)
     {
-	sec = strtoul(argv[1], NULL, 10);
-	if(errno == ERANGE)
-	{
-	    cout << "Invalid argument." << endl;
-	    errno = 0;
-	    return 1;
-	}
+    	mpz_set_str(sec, argv[1], 10);
     }
     cout << "[M]anual or [A]uto?" << endl;
     char c;
@@ -39,15 +35,20 @@ int main(int argc, char **argv)
         case 'm':
         case 'M':
             cout << "Enter prime: \t";
-            cin >> p;
-            if(!isPrime(p))
+            getline(cin, buf);
+	    mpz_set_str(p, buf.c_str(), 10);
+            if(mpz_probab_prime_p(p, 25) != 2)
             {
-                cout << p << " is not a prime." << endl;
-                return 1;
+                cout << p << " is (probably) not a prime. Continue? y/n" << endl;
+                cin >> c;
+		if(c != 'y' && c != 'Y') 
+		{
+		    return 1;
+		}
             }
             cout << "Enter base: \t";
             cin >> g;
-            if(g <= 1)
+            if(mpz_cmp_si(g, 1) <= 0) //g <= 1
             {
                 cout << "Base must be higher than 1" << endl;
                 return 1;
@@ -67,9 +68,10 @@ int main(int argc, char **argv)
             cin >> seed;
             gen.seed(seed);
             cout << "Gen'd prime: \t";
-            p = gen()/sec + 2;
-            while(!isPrime(p))
-                p++;
+            mpz_set_ui(p, gen());
+            mpz_tdiv_q(p, p, sec);
+            mpz_add_ui(p, p, 2);
+            mpz_nextprime(p, p);
             cout << p << endl;
             cout << "Gen'd base: \t";
             factors = factorize(p-1);
@@ -114,83 +116,62 @@ int main(int argc, char **argv)
     return 0;
 }
 
-bool isPrime(int64_t x)
+mpz_t totient(mpz_t rop, const mpz_t x)
 {
-    for(int64_t i = 2; i*i <= x; i++)
+    assert(mpz_cmpsi(x, 0) >= 0);
+    mpz_t i, tmp;
+    mpz_set_si(rop, rop, 1);
+    mpz_inits(i, tmp, NULL);
+    for(; mpz_cmp(i, x) < 0; mpz_add_ui(i, i, 1))
     {
-        if(x % i == 0)
-            return false;
+	mpz_gcd(tmp, x, i);
+        if(mpz_cmp(tmp, 1) == 0) //gcd(x, i) == 1
+            mpz_add_ui(res, res, 1);
     }
-    return true;
-}
-
-int64_t spow(int64_t b, int64_t e)
-{
-    assert(e >= 0);
-    int64_t res = 1;
-    for(int64_t i = 0; i < e; i++)
-        res *= b;
+    mpz_clear(i);
+    mpz_clear(tmp);
     return res;
 }
 
-int64_t modpow(int64_t b, int64_t e, int64_t m)
-{
-    assert(e >= 0 && m > 1);
-    int64_t res = 1;
-    for(int64_t i = 0; i < e; i++) {
-        res *= b;
-        res %= m;
-    }
-    return res;
-}
 
-int64_t totient(int64_t x)
+mpztuset factorize(const mpz_t x)
 {
-    assert(x >= 0);
-    int64_t res = 0;
-    for(int64_t i = 1; i < x; i++)
+    mpztuset factors;
+    mpz_t i, xs, tmp;
+    mpz_inits(i, tmp, xs, NULL);
+    mpz_set(xs, x);
+    for(mpz_set_si(i, 2); mpz_cmp(i, xs) <= 0; mpz_add_ui(i, i, 1))
     {
-        if(gcd(x, i) == 1)
-            res++;
-    }
-    return res;
-}
-
-int64_t gcd(int64_t a, int64_t b)
-{
-    assert(a > 0 && b > 0);
-    while(b > 0)
-    {
-        int64_t h = a % b;
-        a = b;
-        b = h;
-    }
-    return a;
-}
-
-i64uset factorize(int64_t x)
-{
-    i64uset factors;
-    for(int64_t i = 2; i <= x; i++)
-    {
-        while(x % i == 0)
+		mpz_mod(tmp, xs, i);
+		int k = 0;
+        while(mpz_cmp_ui(tmp, 0) == 0)
         {
-            factors.insert(i);
-            x /= i;
+			if(k == 0)
+			{
+				mpz_t to_insert;
+				mpz_init(to_insert);
+				mpz_set(to_insert, i);
+				factors.insert(to_insert);
+			}
+			mpz_div_q(x, x, i);
+			k++;
         }
     }
     return factors;
 }
 
-bool isPrimitiveRoot(int64_t a, int64_t p)
+bool isPrimitiveRoot(const mpz_t a, const mpz_t p)
 {
-    assert(a > 0 && p > 0);
-    if(a > p)
+    assert(mpz_cmpsi(a, 0) > 0 && mpz_cmpsi(p, 0)  > 0);
+    if(mpz_cmp(a, p) > 0)
         return false;
 
-    int64_t s = totient(p), x = s;
-
-    for(int64_t i = 2; i <= x/i; i++)
+    mpz_t s, x, i, tmp;
+    mpz_inits(s, x, i, tmp, NULL);
+    mpz_set(s, totient(p));
+    mpz_set(x, s);
+    mpz_
+    for(mpz_set_si(i, 2); mpz_cmp(i,  x/i; i++)
     {
         while(x % i == 0)
         {
