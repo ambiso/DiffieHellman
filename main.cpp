@@ -95,7 +95,7 @@ int main(int argc, char **argv)
                 return 1;
             }
             cout << g << endl;
-            a = gen() % (p-1) + 2;
+            a = gen() % (p-2) + 2;
             cout << "Gen'd secret: \t" << a << endl;
             break;
         default:
