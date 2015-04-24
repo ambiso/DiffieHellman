@@ -27,17 +27,17 @@ int main(int argc, char **argv)
     	mpz_set_str(sec, argv[1], 10);
     }
     cout << "[M]anual or [A]uto?" << endl;
-    char c;
-    cin >> c;
-    switch(c) {
+    getline(cin, buf);
+    switch(buf[0]) {
         case 'm':
         case 'M':
             cout << "Enter prime: \t";
-            getline(cin, buf);
-			mpz_set_str(p, buf.c_str(), 10);
+            gmp_scanf("%Zd", p);
+
             if(mpz_probab_prime_p(p, 25) != 2)
             {
 				gmp_printf("%Zd is (probably) not a prime Continue? y/n_\b", p);
+                return 1;
             }
             cout << "Enter base: \t";
             gmp_scanf("%Zd", g);
@@ -94,11 +94,6 @@ int main(int argc, char **argv)
                 cout << "This should never happen. Please report this issue" << endl;
                 return 1;
             }
-<<<<<<< HEAD
-            cout << g << endl;
-            a = gen() % (p-2) + 2;
-            cout << "Gen'd secret: \t" << a << endl;
-=======
             gmp_printf("%Zd\n", g);
             mpz_sub_ui(tmp, p, 2); //p-2
             mpz_set_ui(tmp2, gen()); //gen()
@@ -106,7 +101,6 @@ int main(int argc, char **argv)
             mpz_add_ui(tmp, tmp, 2); // (gen() % (p-2)) + 2
             mpz_set(a, tmp); // a = (gen() % (p-2)) + 2
             gmp_printf("Gen'd secret: \t%Zd\n", a);
->>>>>>> No more compiling errors. (amend: but runtime errors)
             break;
         default:
             cout << "Error, wrong input." << endl;
@@ -179,6 +173,7 @@ bool isPrimitiveRoot(const mpz_t a, const mpz_t p)
     mpz_inits(s, x, i, tmp, NULL);
     totient(s, p);
     mpz_set(x, s);
+    mpz_set_ui(i, 2);
     mpz_tdiv_q(tmp, x, i);
     for(mpz_set_si(i, 2); mpz_cmp(i,  tmp) <= 0; mpz_add_ui(i, i, 1))
     {
