@@ -1,7 +1,7 @@
 CC=clang++
 CFLAGS=-c -Wall -O3 -std=c++11
 LDFLAGS=-lgmp
-SOURCES=main.cpp
+SOURCES=main.cpp helpers.cpp
 OBJECTS=$(SOURCES:.cpp=.o)
 EXECUTABLE=dhke
 PREFIX=/usr/bin
