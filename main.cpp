@@ -21,7 +21,7 @@ int main(int argc, char **argv)
     string buf;
     mt19937 gen;
     mpztuset factors;
-    mpz_set_ui(sec, 100000);
+    mpz_set_ui(sec, 1);
     if(argc > 1)
     {
     	mpz_set_str(sec, argv[1], 10);
