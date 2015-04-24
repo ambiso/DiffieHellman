@@ -34,9 +34,9 @@ int main(int argc, char **argv)
             cout << "Enter prime: \t";
             gmp_scanf("%Zd", p);
 
-            if(mpz_probab_prime_p(p, 25) != 2)
+            if(mpz_probab_prime_p(p, 25) == 0)
             {
-				gmp_printf("%Zd is (probably) not a prime Continue? y/n_\b", p);
+				gmp_printf("%Zd is not a prime.", p);
                 return 1;
             }
             cout << "Enter base: \t";
