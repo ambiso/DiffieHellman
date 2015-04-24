@@ -37,7 +37,8 @@ int main(int argc, char **argv)
             if(mpz_probab_prime_p(p, 25) == 0)
             {
 				gmp_printf("%Zd is not a prime.", p);
-                return 1;
+				mpz_nextprime(p, p);
+				gmp_printf("Using %Zd instead.", p);
             }
             cout << "Enter base: \t";
             gmp_scanf("%Zd", g);
