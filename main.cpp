@@ -67,8 +67,7 @@ int main(int argc, char **argv)
             cin >> seed;
             gen.seed(seed);
             cout << "Gen'd prime: \t";
-            while(p == 0)
-                p = gen()/sec;
+            p = gen()/sec + 2;
             while(!isPrime(p))
                 p++;
             cout << p << endl;
@@ -96,7 +95,7 @@ int main(int argc, char **argv)
                 return 1;
             }
             cout << g << endl;
-            a = gen() % p;
+            a = gen() % (p-1) + 2;
             cout << "Gen'd secret: \t" << a << endl;
             break;
         default:
