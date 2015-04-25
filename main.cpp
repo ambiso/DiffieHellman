@@ -1,8 +1,6 @@
 #include <iostream>
 #include <random>
 #include <gmp.h>
-#include <unordered_set>
-#include <inttypes.h>
 #include <assert.h>
 #include "helpers.hpp"
 

@@ -3,3 +3,7 @@ bin/
 obj/
 *.depend
 *.layout
+*.out
+*.exe
+*.o
+dhke

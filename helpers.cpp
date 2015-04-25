@@ -31,9 +31,10 @@ void gen_base(mpz_t rop, mpz_t p)
         exit(1);
     }
     mpz_set(rop, g);
+    mpz_clears(tmp, i, facsize, j, g, NULL);
 }
 
-void totient(mpz_t rop, const mpz_t x)
+void phi(mpz_t rop, const mpz_t x)
 {
     assert(mpz_cmp_si(x, 0) >= 0);
     mpz_t i, tmp;
@@ -44,8 +45,7 @@ void totient(mpz_t rop, const mpz_t x)
         if(mpz_cmp_ui(tmp, 1) == 0) //gcd(x, i) == 1
             mpz_add_ui(rop, rop, 1);
     }
-    mpz_clear(i);
-    mpz_clear(tmp);
+    mpz_clears(tmp, i, NULL);
 }
 
 
@@ -73,6 +73,7 @@ mpztuset factorize(const mpz_t x)
 			k++;
         }
     }
+    mpz_clears(i, xs, tmp, NULL);
     return factors;
 }
 
@@ -84,7 +85,7 @@ bool isPrimitiveRoot(const mpz_t a, const mpz_t p) //DEPRECATED
 
     mpz_t s, x, i, tmp;
     mpz_inits(s, x, i, tmp, NULL);
-    totient(s, p);
+    phi(s, p);
     mpz_set(x, s);
     mpz_set_ui(i, 2);
     mpz_tdiv_q(tmp, x, i);
