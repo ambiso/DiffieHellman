@@ -20,5 +20,5 @@ clean:
 install:
 	cp $(EXECUTABLE) $(PREFIX)
 
-remove:
+uninstall:
 	rm -vi $(PREFIX)/$(EXECUTABLE)
